@@ -116,7 +116,8 @@ module OandaAPI
                     params_key    => Utils.stringify_keys(conditions.merge(default_params)),
                     :headers      => OandaAPI.configuration.headers.merge(headers),
                     :open_timeout => OandaAPI.configuration.open_timeout,
-                    :read_timeout => OandaAPI.configuration.read_timeout
+                    :read_timeout => OandaAPI.configuration.read_timeout,
+                    :timeout      => OandaAPI.configuration.open_timeout
       end
 
       handle_response response, resource_descriptor
@@ -159,10 +160,15 @@ module OandaAPI
     #
     # @return [void]
     def self.throttle_request_rate
+      last_request_time = last_request_at
       now = Time.now
-      delta = now - (last_request_at || now)
-      _throttle(delta, now) if delta < OandaAPI.configuration.min_request_interval &&
-                                       OandaAPI.configuration.use_request_throttling?
+
+      if last_request_time
+        delta = now - last_request_time
+        _throttle(delta, now) if delta < OandaAPI.configuration.min_request_interval &&
+                                         OandaAPI.configuration.use_request_throttling?
+      end
+
       self.last_request_at = Time.now
     end
 
